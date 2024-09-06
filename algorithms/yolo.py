@@ -4,7 +4,7 @@ from .base import BaseAlgorithm
 class YOLOAlgorithm(BaseAlgorithm):
     """Handler for YOLO-based models."""
     
-    def process_frame(self, frame):
+    def detect(self):
         # Implement YOLO processing logic here
         return self.model(frame)  # Replace with actual logic
 
