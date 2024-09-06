@@ -1,29 +1,20 @@
+# engine/video_analyzer.py
 import cv2
 import asyncio
 import aiohttp
 from ultralytics import YOLO
-from config import API_URL
+from config.config import API_URL
+from algorithms.algorithm_factory import algorithm_factory
 
 class VideoAnalyzerEngine:
     def __init__(self):
         self.api_url = API_URL
         self.camera_configs = {}  # Store configurations of each camera
-        self.models = {}  # Store loaded models
+        self.models = {}  # Store loaded models and their associated handlers
 
     async def fetch_camera_model_mapping(self):
         """
         Fetch the mapping of cameras to their respective models and stream URLs.
-        Example response:
-        {
-            "camera1": {
-                "stream_url": "rtsp://camera1/stream",
-                "models": ["model1", "model2"]
-            },
-            "camera2": {
-                "stream_url": "rtsp://camera2/stream",
-                "models": ["model2"]
-            }
-        }
         """
         async with aiohttp.ClientSession() as session:
             async with session.get(f"{self.api_url}/camera-models") as response:
@@ -31,27 +22,28 @@ class VideoAnalyzerEngine:
 
     def load_models(self):
         """
-        Load models based on the configurations fetched from the API.
-        Models are loaded once and reused across cameras.
+        Load models and create associated handler instances based on the configurations fetched from the API.
         """
-        model_names = set(
-            model_name for config in self.camera_configs.values() for model_name in config['models']
-        )
-        for model_name in model_names:
-            # Load each model dynamically
-            self.models[model_name] = YOLO(f'/path/to/{model_name}.pt')
+        for config in self.camera_configs.values():
+            for model_config in config['models']:
+                model_name = model_config['name']
+                algorithm = model_config['algorithm']
+                
+                if model_name not in self.models:
+                    # Load the model dynamically
+                    model = YOLO(f'/path/to/{model_name}.pt')
+                    # Create the appropriate handler instance using the algorithm name
+                    self.models[model_name] = algorithm_factory(algorithm, model)
 
-    async def process_stream(self, camera_id, config):
+    async def process_stream(self, camera_id, model_name, stream_url):
         """
-        Process the video stream for a given camera using the associated models.
+        Process the video stream for a given camera using the specified model and handler.
         Args:
             camera_id (str): Identifier of the camera.
-            config (dict): Configuration containing stream URL and associated models.
+            model_name (str): Model to be used for detection.
+            stream_url (str): URL of the camera stream.
         """
-        stream_url = config['stream_url']
-        model_names = config['models']
-        
-        print(f"Starting stream processing for camera {camera_id} using models {model_names}")
+        print(f"Starting stream processing for camera {camera_id} using model {model_name}")
         
         cap = cv2.VideoCapture(stream_url)
 
@@ -59,20 +51,24 @@ class VideoAnalyzerEngine:
             print(f"Failed to open stream for camera {camera_id}")
             return
 
+        handler = self.models.get(model_name)
+
+        if not handler:
+            print(f"No handler found for model name {model_name}")
+            cap.release()
+            return
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
 
-            # Process frame with each associated model
-            for model_name in model_names:
-                model = self.models.get(model_name)
-                if model:
-                    results = model(frame)
-                    await self.process_results(camera_id, model_name, results)
+            # Use the handler to process the frame with the model
+            results = handler.process_frame(frame)
+            await self.process_results(camera_id, model_name, results)
 
         cap.release()
-        print(f"Stopped stream processing for camera {camera_id}")
+        print(f"Stopped stream processing for camera {camera_id} using model {model_name}")
 
     async def process_results(self, camera_id, model_name, results):
         """
@@ -117,15 +113,17 @@ class VideoAnalyzerEngine:
 
     async def run_all_cameras(self):
         """
-        Start processing streams for all configured cameras concurrently.
+        Start processing streams for all configured cameras and models concurrently.
         """
         await self.fetch_camera_model_mapping()
         self.load_models()
 
-        tasks = [
-            self.process_stream(camera_id, config)
-            for camera_id, config in self.camera_configs.items()
-        ]
+        tasks = []
+        for camera_id, config in self.camera_configs.items():
+            stream_url = config['stream_url']
+            for model_config in config['models']:
+                model_name = model_config['name']
+                tasks.append(self.process_stream(camera_id, model_name, stream_url))
 
         await asyncio.gather(*tasks)
 
