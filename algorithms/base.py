@@ -1,14 +1,19 @@
 # algorithms/base.py
+
+import logging
+import aiohttp
 from abc import ABC, abstractmethod
 
-import aiohttp
 from config.config import API_URL
+
+logger = logging.getLogger(__name__)
 
 class BaseAlgorithm(ABC):
     """Abstract base class for all algorithm handlers."""
     
     def __init__(self, model_config):
         self.model_config = model_config
+        logger.info(f"Initialized {self.__class__.__name__} with model: {model_config}")
 
     @abstractmethod
     def detect(self):
@@ -28,6 +33,7 @@ class BaseAlgorithm(ABC):
             "object": detection,  # Serialize detection data as needed
             "timestamp": detection.timestamp
         }
+        logger.info(f"send results {payload}")
         async with aiohttp.ClientSession() as session:
             async with session.post(f"{self.api_url}/notify", json=payload) as response:
                 if response.status == 200:

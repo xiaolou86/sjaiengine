@@ -2,6 +2,7 @@
 import cv2
 import asyncio
 import aiohttp
+import logging
 from ultralytics import YOLO
 from config.config import API_URL
 from algorithms.algorithm_factory import algorithm_factory
@@ -26,6 +27,18 @@ from algorithms.algorithm_factory import algorithm_factory
     }
 ]
 """
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("video_analyzer.log"),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 class VideoAnalyzerEngine:
     def __init__(self):
