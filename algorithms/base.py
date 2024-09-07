@@ -19,7 +19,7 @@ class BaseAlgorithm(ABC):
     def detect(self):
         pass
 
-    def process_results(self):
+    async def process_results(self):
         """
         Send a notification to the platform with detection details.
         Args:

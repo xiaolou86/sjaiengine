@@ -1,6 +1,10 @@
 # algorithms/yolo.py
 from .base import BaseAlgorithm
+import cv2
+from pathlib import Path
+
 from ultralytics import YOLO
+from ultralytics.utils.files import increment_path
 
 class OnDutyAlgorithm(BaseAlgorithm):
     """Handler for YOLO-based models."""
@@ -26,7 +30,7 @@ class OnDutyAlgorithm(BaseAlgorithm):
         fps, fourcc = int(videocapture.get(5)), cv2.VideoWriter_fourcc(*"mp4v")
 
         # Output setup
-        save_dir = increment_path(Path("outputs") / "exp", exist_ok)
+        save_dir = increment_path(Path("outputs") / "exp", mkdir=True)
         save_dir.mkdir(parents=True, exist_ok=True)
         video_writer = cv2.VideoWriter(str(save_dir / f"{Path(source).stem}.mp4"), fourcc, fps, (frame_width, frame_height))
     
