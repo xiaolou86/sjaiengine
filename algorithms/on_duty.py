@@ -25,6 +25,7 @@ class OnDutyAlgorithm(BaseAlgorithm):
         self.last_time_no_person = 0
         self.persons = {}
         self.keypoints = None
+        self.last_time_alert = 0
     
     def detect(self):
         # Video setup
@@ -47,7 +48,6 @@ class OnDutyAlgorithm(BaseAlgorithm):
             if not success:
                 break
     
-            # TODO: add logic
             results = self.model.track(frame, classes=self.class_id, persist=True)
             if len(results) <= 0:
                 continue
@@ -58,10 +58,13 @@ class OnDutyAlgorithm(BaseAlgorithm):
             if len(filter_boxes) == 0:
                 if self.no_person == True:
                     #if current_time - self.last_time_no_person > 60*5: # 300 seconds threshold
-                    if current_time - self.last_time_no_person > 1: # 300 seconds threshold
-                        # TODO: generate an alert
-                        logger.info("no person, generate an alert")
+                    if current_time - self.last_time_no_person > 1: # 1 seconds threshold
                         self.last_time_no_person = current_time
+                        if current_time - self.last_time_alert < 60*10: # 600 seconds threshold
+                            continue
+                        # generate an alert
+                        logger.info("no person, generate an alert")
+                        self.last_time_alert = current_time
                         alert_data = {
                             "file": "f",
                             "video": "v",
@@ -87,7 +90,7 @@ class OnDutyAlgorithm(BaseAlgorithm):
             track_ids = filter_boxes.id.int().cpu().tolist()
 
             for box, track_id in zip(boxes, track_ids):
-                # TODO: add logic for move; clearup self.persions
+                # TODO: add logic for move; clearup self.persons
                 if track_id not in self.persons:
                     self.persons[track_id] = box
                     self.no_move = False
@@ -97,9 +100,7 @@ class OnDutyAlgorithm(BaseAlgorithm):
 
                     self.persons[track_id] = box
 
-
-
-            video_writer.write(frame)
+            #video_writer.write(frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
