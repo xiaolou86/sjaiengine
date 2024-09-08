@@ -1,3 +1,4 @@
 aiohttp
 opencv-python-headless
 ultralytics
+lapx>=0.5.2

@@ -1,6 +1,7 @@
 # algorithms/yolo.py
 from .base import BaseAlgorithm
 import cv2
+import time
 from pathlib import Path
 
 from ultralytics import YOLO
@@ -55,6 +56,7 @@ class OnDutyAlgorithm(BaseAlgorithm):
                     if current_time - self.last_time_no_person > 60*5: # 300 seconds threshold
                         # TODO: generate an alert
                         self.last_time_no_person = current_time
+                        self.process_results()
                 else:
                     self.no_person = True
                     self.last_time_no_person = current_time
