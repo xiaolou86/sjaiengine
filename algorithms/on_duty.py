@@ -2,10 +2,13 @@
 from .base import BaseAlgorithm
 import cv2
 import time
+import logging
 from pathlib import Path
 
 from ultralytics import YOLO
 from ultralytics.utils.files import increment_path
+
+logger = logging.getLogger(__name__)
 
 class OnDutyAlgorithm(BaseAlgorithm):
     """Handler for YOLO-based models."""
@@ -47,22 +50,26 @@ class OnDutyAlgorithm(BaseAlgorithm):
                 continue
 
             filter_boxes = results[0].boxes[results[0].boxes.cls == self.class_id]
-            boxes = filter_boxes.xyxy.cpu()
-            track_ids = filter_boxes.id.int().cpu().tolist()
 
             current_time = time.time()
-            if len(boxes) == 0:
+            if len(filter_boxes) == 0:
                 if self.no_person == True:
-                    if current_time - self.last_time_no_person > 60*5: # 300 seconds threshold
+                    #if current_time - self.last_time_no_person > 60*5: # 300 seconds threshold
+                    if current_time - self.last_time_no_person > 1: # 300 seconds threshold
                         # TODO: generate an alert
+                        logger.info("no person, generate an alert")
                         self.last_time_no_person = current_time
                         self.process_results()
                 else:
                     self.no_person = True
                     self.last_time_no_person = current_time
                 continue
-
             self.no_person = False
+
+            boxes = filter_boxes.xyxy.cpu()
+            logger.info(boxes)
+            logger.info(filter_boxes.id)
+            track_ids = filter_boxes.id.int().cpu().tolist()
 
             for box, track_id in zip(boxes, track_ids):
                 # TODO: add logic for move; clearup self.persions
