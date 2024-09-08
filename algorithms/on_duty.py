@@ -87,6 +87,7 @@ class OnDutyAlgorithm(BaseAlgorithm):
             logger.info(filter_boxes.id)
             if filter_boxes.id is None:
                 logger.warning("filter_boxes.id is None.")
+                continue
             track_ids = filter_boxes.id.int().cpu().tolist()
 
             for box, track_id in zip(boxes, track_ids):
