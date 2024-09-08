@@ -1,7 +1,7 @@
 # algorithms/base.py
 
 import logging
-import aiohttp
+import requests
 from abc import ABC, abstractmethod
 
 from config.config import API_URL
@@ -13,13 +13,15 @@ class BaseAlgorithm(ABC):
     
     def __init__(self, model_config):
         self.model_config = model_config
+        self.api_url = API_URL
+
         logger.info(f"Initialized {self.__class__.__name__} with model: {model_config}")
 
     @abstractmethod
     def detect(self):
         pass
 
-    async def process_results(self, alarm_data):
+    def process_results(self, alarm_data):
         """
         Send a notification to the platform with detection details.
         Args:
@@ -33,10 +35,14 @@ class BaseAlgorithm(ABC):
         alarm_data["cameraName"] = "cameraName"
         payload = alarm_data
         logger.info(f"send results {payload}")
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{self.api_url}/notify", json=payload) as response:
-                if response.status == 200:
-                    print(f"Notification sent for camera")
-                else:
-                    print(f"Failed to send notification for camera")
+        try:
+            response = requests.post(f"{self.api_url}/notify", json=payload)
+            logger.info(response.status_code)
+            if response.status_code == 200:
+                response_data = response.json()
+                logger.info(response_data)
+            else:
+                logger.error(f"Failed to send notification for camera")
+        except requests.RequestException as e:
+            logger.error(e)
 

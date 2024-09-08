@@ -29,6 +29,9 @@ class OnDutyAlgorithm(BaseAlgorithm):
     def detect(self):
         # Video setup
         source = self.model_config["stream_url"]
+        #source = "人员在岗.mp4"
+        #source = "人员脱岗.mp4"
+        #source = "人员跌倒.mkv"
         videocapture = cv2.VideoCapture(source)
         frame_width, frame_height = int(videocapture.get(3)), int(videocapture.get(4))
         fps, fourcc = int(videocapture.get(5)), cv2.VideoWriter_fourcc(*"mp4v")
@@ -45,7 +48,7 @@ class OnDutyAlgorithm(BaseAlgorithm):
                 break
     
             # TODO: add logic
-            results = self.model.track(frame)
+            results = self.model.track(frame, persist=True)
             if len(results) <= 0:
                 continue
 
