@@ -36,7 +36,7 @@ class BaseAlgorithm(ABC):
         async with aiohttp.ClientSession() as session:
             async with session.post(f"{self.api_url}/notify", json=payload) as response:
                 if response.status == 200:
-                    print(f"Notification sent for camera {camera_id} using model {model_name}")
+                    print(f"Notification sent for camera")
                 else:
-                    print(f"Failed to send notification for camera {camera_id} using model {model_name}")
+                    print(f"Failed to send notification for camera")
 
