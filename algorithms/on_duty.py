@@ -59,7 +59,17 @@ class OnDutyAlgorithm(BaseAlgorithm):
                         # TODO: generate an alert
                         logger.info("no person, generate an alert")
                         self.last_time_no_person = current_time
-                        self.process_results()
+                        alert_data = {
+                            "file": "f",
+                            "video": "v",
+                            "alarmMsg": "a",
+                            "alarmTime": current_time,
+                            "name": "n",
+                            "code": "c",
+                            "alarmLevelCode": "a",
+                            "alarmLevelName": "a"
+                        }
+                        self.process_results(alert_data)
                 else:
                     self.no_person = True
                     self.last_time_no_person = current_time

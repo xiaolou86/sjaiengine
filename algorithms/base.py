@@ -19,7 +19,7 @@ class BaseAlgorithm(ABC):
     def detect(self):
         pass
 
-    async def process_results(self):
+    async def process_results(self, alarm_data):
         """
         Send a notification to the platform with detection details.
         Args:
@@ -27,12 +27,11 @@ class BaseAlgorithm(ABC):
             model_name (str): Model that detected the object.
             detection (object): Detected object details.
         """
-        payload = {
-            "camera_id": camera_id,
-            "model": model_name,
-            "object": detection,  # Serialize detection data as needed
-            "timestamp": detection.timestamp
-        }
+        alarm_data["id"] = 1
+        alarm_data["terminalId"] = 1
+        alarm_data["cameraIp"] = "1.1.1.1"
+        alarm_data["cameraName"] = "cameraName"
+        payload = alarm_data
         logger.info(f"send results {payload}")
         async with aiohttp.ClientSession() as session:
             async with session.post(f"{self.api_url}/notify", json=payload) as response:
