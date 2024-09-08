@@ -48,7 +48,7 @@ class OnDutyAlgorithm(BaseAlgorithm):
                 break
     
             # TODO: add logic
-            results = self.model.track(frame, persist=True)
+            results = self.model.track(frame, classes=self.class_id, persist=True)
             if len(results) <= 0:
                 continue
 
@@ -82,6 +82,8 @@ class OnDutyAlgorithm(BaseAlgorithm):
             boxes = filter_boxes.xyxy.cpu()
             logger.info(boxes)
             logger.info(filter_boxes.id)
+            if filter_boxes.id is None:
+                logger.warning("filter_boxes.id is None.")
             track_ids = filter_boxes.id.int().cpu().tolist()
 
             for box, track_id in zip(boxes, track_ids):
