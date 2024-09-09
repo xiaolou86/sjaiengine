@@ -5,7 +5,5 @@ services:
     build: .
     environment:
       - API_URL=http://platform-api-url.com
-    volumes:
-      - ./video_analyzer:/app
     restart: always
 
